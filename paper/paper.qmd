@@ -1,0 +1,637 @@
+---
+title: "Who Gets What: How Population and Income Shape Toronto’s Budget Decisions"
+subtitle: "Understanding the Impact of Demographics and Economic Factors on City Spending Across 25 Wards"
+author: 
+  - Aviral Bhardwaj
+thanks: "Code and data are available at: https://github.com/Aviral-03/Toronto-WardWide-Budget-Analysis"
+date: today
+date-format: long
+abstract: "This study investigates how population density and average household income affect budget allocations across Toronto’s 25 wards. Using data from the city's 2023-2032 Capital Budget Plan and 2021 Ward Profiles, we analyze spending patterns in key areas like health and safety, infrastructure, and community services. Our findings reveal that higher population densities do not guarantee proportionally greater investments in essential services, while wealthier wards often receive larger capital expenditures. These insights highlight potential disparities in resource distribution, emphasizing the need for more equitable urban budget planning to address diverse community needs."
+format: pdf
+number-sections: true
+toc: true
+bibliography: references.bib
+prefer-html: true
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(opendatatoronto)
+library(readxl)
+library(styler)
+library(dplyr)
+library(arrow)
+library(ggrepel)
+library(knitr)
+library(kableExtra)
+library(patchwork)
+library(sf)
+library(lintr)
+library(DiagrammeR)
+library(rsvg)
+library(magrittr)
+library(DiagrammeRsvg)
+library(png)
+library(webshot2)
+library(gridExtra)
+```
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+# Get the analysis data
+analysis_budget_data <- read.csv(here::here("data/02-analysis_data/analysis_budget_data.csv"))
+analysis_building_permits <- read.csv(here::here("data/02-analysis_data/analysis_building_permits.csv"))
+analysis_ward_data <- read.csv(here::here("data/02-analysis_data/analysis_ward_data.csv"))
+
+
+# Get Model
+# model <- readRDS(here::here("models/model.rds"))
+```
+
+# Introduction {#sec-intro}
+
+# Data {#sec-data}
+
+The raw data was sourced from the City of Toronto's Open Data Portal using the `opendatatoronto` [@openDataToronto] package. For the purpose of this analysis we used several data sets: `2023 Ward Profiles (25-Ward Model)` [@toronto_ward_profiles], `Capital Budget and Plan Details from 2021-2024` [@toronto_budget_plan], `City Wards` [@toronto_city_wards], and `Building Permits - Active Permits` [@toronto_building_permits].
+
+The data, provided in CSV formats, was cleaned and analyzed using R [@citeR] programming language. The `readxl` [@readxl] package was used for reading Excel files. Other R packages used which includes `tidyverse` [@tidyverse], `styler` [@styler], and `dplyr` [@dplyr] for creating tables. The `ggplot2` [@ggplot2] and `kableExtra` [@kableExtra] were used for data visualization and table formatting. The `patchwork` [@patchwork] package was used for combining multiple plots, and `sf` [@sf] for spatial data analysis. For models, we used `rstan` [@rstan] was used for fitting the model, and `modelsummary` [@modelsummary] for model summary tables. The `lintr` [@lintr] package was used for code linting. The `arrow` [@arrow] package was used for reading and writing Parquet files.
+
+## Measurement
+
+Our research question and estimand analyse the relationship between key demographic and economic factors—specifically, population and average household income—and the budget allocation across various categories in Toronto's 25 wards. Population is a critical demographic indicator, representing the number of residents in each ward, while average household income reflects economic well-being, influencing access to resources and quality of life [@Schaeffer]. Therefore, these two variables of interest were chosen for the analysis. Our primary aim is to estimate the impact of these variables on budget allocations for these specific categories of interest, specifically Growth-Related expenditures, State of Good Repair, and Service Improvement and Enhancement.
+
+Population density is expected to affect the demand for services and infrastructure, while average household income may shape how resources are distributed across wards, reflecting broader economic disparities. The estimand is the causal effect of these factors on the allocation of funds, and the estimator will quantify how shifts in population and income levels influence budgetary decisions. By understanding this relationship, we aim to offer insights into how demographic and economic variables drive municipal spending patterns in different categories across the city. In order to better analyze the trends and modelling the data, we will use the Captial Budget and Plan Details from 2021-2024 datasets, comparing total 10-year budget allocations across different wards and categories of interest.
+
+## Ward Profiles (25-Ward Model) {#sec-ward-profiles}
+
+The 2021 Ward Profiles [@toronto_ward_profiles], based on the 25-Ward model were provided by City Planning. These profiles included census data from the 2021, 2016, and 2011 Census of Population, covering demographic, social, and economic information for each ward in Toronto. These variables were collected through methods including online responses, mailed questionnaires, the Census Help Line, and enumerators [@nhs_canada].
+
+These questionnaires gathered information on various topics related to residents' demographic characteristics, such as education, household income, number of dependents, employment status and etc. Participation in the survey is voluntary, and data is collected directly from residents, including their postal codes, which are used to determine their respective wards. To ensure privacy and confidentiality, the data is subsequently aggregated and anonymized [@canada_statcan_2023_nhs].
+
+This data-set was included in this analysis to provide insights into the population and average household income for each ward, providing insights into the city's socioeconomic landscape. 25-Ward model was used instead of the 44-Ward model as it was the most recent data available at the time of analysis and matched the Capital Budget data.
+
+The data was stored in an Excel workbook with multiple tabs, but for this analysis, we used the first tab, `2021 Census One variable`, which contains data for all 25 wards (Ward 1, Ward 2, ..., Ward 25). After cleaning, the data was saved in CSV and Parquet formats, with the following columns:
+
+-   `ward_id`: unique identifier for each ward,
+-   `ward`: ward name,
+-   `population`: total population,
+-   `income`: average household income.
+
+The ward names were manually entered into the cleaned data to match with `ward_id`. A sample of the data can be seen in [@tbl-ward-profile-data].
+
+```{r}
+#| echo: false
+#| message: false
+#| label: tbl-ward-profile-data
+#| tbl-cap: Sample of Cleaned Toronto Ward Profile Data
+#| tbl-pos: "h"
+
+# Display the first few rows of the cleaned ward profile data using kable
+analysis_ward_data |>
+  head() |>
+  kable(col.names = c("Ward ID", "Ward Name", "Population", "Income")) |>
+  kable_styling(full_width = F, position = "center")
+  
+```
+
+## Capital Budget and Plan Details {#sec-capital-budget}
+
+Each year, the City of Toronto publishes the Capital Budget and Plan Details dataset [@toronto_budget_plan], which outlines a 10-year capital budget and plan. This dataset breaks down the capital budget across the city’s 25 wards, allocating funds for infrastructure projects, equipment purchases, and other fixed assets. This budget is developed through a collaborative process, where city staff prepare an initial draft, which is then reviewed by the Budget Committee. Input is solicited from Toronto residents and businesses, and subsequently, the Mayor presents the finalized budget proposal by February 1. City Council reviews and considers this budget within 30 days [@toronto_2024_budget].
+
+For the purpose of this analysis we selected the year 2021-2024 to align with the 2022 municipal elections and the subsequent relevance to planning efforts. Furthermore, the city's budgeting process underwent significant shifts after 2020 due to the impact of the COVID-19 pandemic, which altered spending priorities and resource allocation. Focusing on the 2021–2024 timeframe allows us to analyze the post-pandemic period, avoiding the uncertainties of the pandemic and ensuring the data remains consistent and reliable.
+
+Each budget plan includes five primary categories under `State of Good Repair`, `Growth Related`, `Health and Safety`, `Service Improvement and Enhancement`, and `Legislated`. These categories define the main areas where capital expenditures are directed. For this analysis, however, we will focus on these three variables of interest: `State of Good Repair`, `Growth Related`, and `Service Improvement and Enhancement`.
+
+These categories were selected because they represent critical areas of investment that directly impact the quality of life and well-being of Toronto residents. `State of Good Repair` focuses on maintaining and preserving existing infrastructure, `Growth Related` addresses the expansion and development of new infrastructure, and `Service Improvement and Enhancement` aims to enhance public services and amenities. By analyzing budget allocations in these categories, we can gain valuable insights into the city's spending priorities and identify opportunities for more effective and equitable resource distribution. While also identifying potential disparities in funding across various wards of the city.
+
+Raw data includes key columns such as `Project Name`, yearly budget allocations for each year, `Ward Number`, `Ward`, `Category`, and `Total 10 Year` (Sum of Year 1 to 10), where the budget is in thousands of dollars (e.g., 10 = \$10,000). [@tbl-capital-budget-data] shows a sample of the cleaned data along with our variables of interest:
+
+-   `Ward ID`
+-   `Ward Name`
+-   `Category of the Capital Budget`
+-   `Total 10-year capital budget` allocated to each ward
+
+Rows with `CW` (city-wide budget) were removed since they were applicable to all wards.
+
+```{r}
+#| echo: false
+#| message: false
+#| label: tbl-capital-budget-data
+#| tbl-cap: Sample of Cleaned Toronto Capital Budget Data
+#| tbl-pos: "h"
+
+analysis_budget_data |>
+  head() |>
+  select(ward_id, ward, category, total_10_year) |>
+  kable(col.names = c("Ward ID", "Ward Name", "Category", 
+                  "Total 10-Year Budget (in 000s)"))
+```
+
+## City Wards {#sec-ward-names}
+
+The City Wards dataset [@toronto_city_wards], published by the City Clerk's Office and last updated on July 22, 2024, contains geographical information about each ward, including the ward ID, ward name, and ward boundary. These ward boundaries were decided as a part of `Bill 5, Better Local Government Act` in 2018, reducing the number of wards from 47 to 25 [@toronto_city_wards].
+
+This dataset, effective January 1, 2024, was used to map the `ward_id` to the ward name in the cleaned data. Key columns include:
+
+-   `ward_id`: unique identifier for each ward,
+-   `ward`: ward name,
+-   `ward_boundary`: geographical boundary of the ward.
+
+The ward names were mapped to the `ward_id` and integrated with the Ward Profiles [@sec-ward-profiles] and Capital Budget data sets [@sec-capital-budget] to create the final data set for analysis. This dataset was not used directly in the analysis but was essential for mapping the ward names to the ward IDs in the cleaned data.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-toronto-map-population
+#| fig-cap: "Map of Toronto highlighting the population and income densities by ward"
+#| fig.pos: 'H'
+#| fig.height: 5
+
+# URL to the zip file
+url <- "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/5e7a8234-f805-43ac-820f-03d7c360b588/resource/35f67d86-cfc8-4483-8d77-50d035b010d9/download/25-ward-model-december-2018-wgs84-latitude-longitude.zip"
+
+# Temporary file to store the downloaded zip
+temp_zip <- tempfile(fileext = ".zip")
+
+# Download the zip file
+download.file(url, temp_zip, mode = "wb")
+
+# Unzip the file to a temporary directory
+temp_dir <- tempdir()
+unzip(temp_zip, exdir = temp_dir)
+
+shapefiles <- list.files(temp_dir, pattern = "\\.shp$", full.names = TRUE)
+
+toronto_map <- st_read(shapefiles[1], quiet = TRUE)
+
+# Clean up the downloaded zip file
+unlink(temp_zip)
+
+# Merge analysis_data with toronto_map by ward_id
+toronto_map <- merge(toronto_map, analysis_ward_data, 
+                     by.x = "AREA_NAME", by.y = "ward") |>
+  rename("income" = "average_household_income")
+
+color_scale <- scale_fill_gradient(low = "lightblue", high = "darkblue")
+
+
+# Plot with facet_wrap for average household income and population
+plot1 <-ggplot() +
+  geom_sf(data = toronto_map, aes(fill = population)) +
+  geom_sf_text(data = toronto_map, aes(label = ward_id), 
+               size = 2, color = "white") +
+  color_scale +
+  theme_minimal() +
+  labs(x = "Longitude", y = "Latitude") +
+  theme(legend.position = "right")
+
+
+plot2 <- ggplot() +
+  geom_sf(data = toronto_map, aes(fill = income)) +
+  geom_sf_text(data = toronto_map, aes(label = ward_id), size = 2, color = "white") +
+  color_scale +
+  theme_minimal() +
+  labs(x = "Longitude", y = "Latitude") +
+  theme(legend.position = "right")
+
+plot1 / plot2
+
+
+```
+
+## Building Permits - Active Permits {#sec-building-permits}
+
+The *Building Permits - Active Permits* dataset [@toronto_building_permits], published by the City Planning Division and last updated on November 28, 2024, serves as a comprehensive record of active building permits in Toronto. A building permit is a municipally issued document, mandated by the Building Code Act and enforced by the City of Toronto, regulating the construction or demolition of physical structures [@toronto_building_permits].
+
+The process of obtaining a building permit involves submitting an application to the City of Toronto, including necessary drawings, documents, and other forms based on the permit type. The Building Division reviews the application, and a Toronto Building Inspector ensures compliance with the Ontario Building Code, Zoning By-law, and other applicable regulations. Once approved, the permit is issued, allowing the applicant to commence construction or demolition.
+
+Table [@tbl-raw-building-permits-data] outlines detailed information about active building permits in Toronto, including key features such as `Permit Number`, `Permit Type`, `Structure Type`, `Status`, and more.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: tbl-raw-building-permits-data
+#| tbl-cap: "Sample of the raw building permits data"
+#| tbl-pos: "h"
+
+# Load the raw building permits data
+building_permits <- read_csv(here::here("data/01-raw_data/building_permits_data.csv"))
+
+# Display the first few rows of the building permits data using kable
+building_permits |>
+  select("_id", PERMIT_TYPE, STRUCTURE_TYPE, WORK, POSTAL, STATUS) |>
+  head() |>
+  kable(col.names = c("ID", "Permit Type", "Structure Type", "Work", "Postal Code", "Status"))
+```
+
+We selected this data-set to evaluate how budget allocations correlate with the number of building permits issued in each ward. The number of permits serves as a proxy for construction activity and development, highlighting the demand for infrastructure investment and capital expenditures. By examining the relationship between building permits and budget allocations, we can gain valuable insights into how construction activity influences resource distribution across the city's wards.
+
+From the raw data, we selected key variables of interest: `Postal Code`, `Status`, and `Work`. The `Postal Code` was used to map building permits to their respective wards, while `Status` and `Work` were utilized to filter permits based on their current state and type of work. [@tbl-status-building-permits-data] lists 45 unique statuses assigned to each submitted permit. For this analysis, we focused on permits with the following statuses: `Approved`, `Application Accepted`, `Issuance Pending`, `Ready for Issuance`, `Permit Issued`, and `Permit Issued/Close File`. These statuses indicate that the permit has been approved and that construction or demolition is either underway or completed.
+
+To ensure we analyzed only construction-related permits, we filtered out entries where `Work` did not have the value `New Building`. The cleaned data was then saved in CSV and Parquet formats with the following columns:
+
+-   **`ward_id`**: Unique identifier for each ward.\
+-   **`total_building_permits`**: Total number of building permits issued in each ward.
+
+[@fig-building-permits-data] illustrates the total number of building permits by ward, providing valuable insights into construction activity and development patterns across Toronto’s wards.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-building-permits-data
+#| fig-cap: "Total number of building permits by Ward"
+#| fig-pos: "h"
+#| fig-height: 5
+#| fig-width: 10
+
+# Display the total number of building permits by ward using kable
+analysis_building_permits |>
+  ggplot(aes(x = ward_id, y = total_building_permits)) +
+  geom_histogram(stat = "identity", fill = "skyblue", color = "darkblue") +
+  labs(x = "Ward ID", y = "Number of building permits") +
+  scale_x_continuous(breaks = seq(1, 25, 1)) +
+  # change the theme
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2")
+```
+
+## Trends in Budget Allocations (2021-2024) {#sec-budget-trends}
+
+
+## Model {#sec-model}
+
+The purpose of this paper is to investigate the relationship between population density, average household income, and budget allocations across Toronto's 25 wards, and their potential impact on the economic well-being of each ward, as represented by the `total_building_permits` issued. To achieve this, we developed a causal model that examines how population and income influence the allocation of funds in key budget categories: `Growth Related`, `State of Good Repair`, and `Service Improvement and Enhancement`.
+
+We employed multilevel modeling to estimate the effect of these variables on the number of building permits issued in each ward. Here we briefly describe a Bayesian Poisson regression model, which incorporates varying intercepts by grouping the effect by ward account. This approach allows us to capture the nuanced effects of demographic and economic factors on infrastructure development and resource distribution. Background details and diagnostics are included in [Appendix @sec-model-details].
+
+### Model set-up
+
+The model was specified as follows:
+
+\begin{align*}
+\text{Building Permits}_{i} & \sim \text{Poisson}(\lambda_{i}) \\
+\log(\lambda_{i}) & = \beta_{0} + \beta_{1} \times \text{Population}_{i} + \beta_{2} \times \text{Income}_{i} + \beta_{3} \times \text{Budget}_{i} + \alpha_{\text{ward}[i]} \\
+\beta_{0} & \sim \text{Normal}(0, 2.5) \\
+\beta_{1} & \sim \text{Normal}(0, 2.5) \\
+\beta_{2} & \sim \text{Normal}(0, 2.5) \\
+\beta_{3} & \sim \text{Normal}(0, 2.5) \\
+\alpha_{\text{ward}} & \sim \text{Normal}(0, \sigma_{\text{ward}})
+\end{align*}
+
+In the above model:
+
+-   $\text{Building Permits}_i$ represents the number of building permits issued in ward `i`,
+-   $\lambda_i$ is the expected count of permits for ward $i$.
+-   $\log(\lambda_i)$ is the linear predictor, which includes:
+    -   $\beta_0$: Intercept
+    -   $\beta_1$: Effect of `population`
+    -   $\beta_2$: Effect of `average_household_income`
+    -   $\beta_3$: Effect of `budget_allocation`
+    -   $\alpha_{\text{ward}[i]}$: Random effect for each ward (captures unobserved heterogeneity between wards).
+-   Priors for $\beta_0$, $\beta_1$, $\beta_2$, and $\beta_3$ are Normal(0, 2.5), allowing for flexibility.
+
+The model was fitted using the `stan_glmer` function from the `rstanarm` package [@citerstanarm] in R [@citeR]. The prior distributions for the coefficients were set to normal distributions with a mean of 0 and a standard deviation of 2.5. The model also included a prior for the intercept, which was set to a normal distribution with a mean of 0 and a standard deviation of 2.5. The varying intercepts for each ward were modeled using a normal distribution with a mean of 0 and a standard deviation of $\sigma_{\text{ward}}$.
+
+### Model justification
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+#| label: fig-causal-model
+#| fig-cap: "Causal model for the relationship between population, income, and budget allocations"
+#| fig-pos: "h"
+
+# create a dag for the model
+causal_model <- "digraph {
+  graph []
+  # Nodes
+  node [shape = plaintext]
+    A [label = 'Population']
+    B [label = 'Budget Allocation']
+    C [label = 'Active Construction Projects']
+    D [label = 'Income']
+{ rank = same A D; }
+  # Edges for confounding variable
+  edge []
+    A -> {B C}
+    D -> {B C}
+    B -> C
+}"
+
+# render the causal model
+exporting_image <- grViz(causal_model) |>
+  export_svg() |>
+  charToRaw() |>
+  rsvg_png(here::here("other/sketches/causal_model.png"), width = 800, height = 600)
+
+image <- readPNG(here::here("other/sketches/causal_model.png"))
+par(mar = rep(2, 4))
+plot.new()
+rasterImage(image, 0, 0, 1, 1)  
+```
+
+## Results {#sec-results}
+
+In this section, we visualize the relationships between population density, average household income, budget allocations with total number of building permits across Toronto's 25 wards. Additionally, we present our model results, highlighting how these variables influence the number of building permits issued in each ward.
+
+### Relationship between Population, Average Household Income, and Budget Allocations
+
+Our budget data spans three categories—`Growth Related`, `State of Good Repair`, and `Service Improvement and Enhancement`—for the years 2021-2024. As observed in [@sec-budget-trends], there has been a steady increase in budget allocations across these categories. To better understand the relationship between these budget categories and our variables of interest, we calculate the average budget allocation for each category across the years. The results are presented in [@tbl-avg-budget-data].
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: tbl-avg-budget-data
+#| tbl-cap: "Average 10-year budget allocations by category (2021-24)"
+#| tbl-pos: "h"
+
+# Calculate the average 10-year budget allocations by category
+average_budget <- analysis_budget_data |>
+  group_by(ward_id, ward, category) |>
+  summarise(avg_total_10_year = mean(total_10_year)) |>
+  pivot_wider(names_from = category, values_from = avg_total_10_year) |>
+  select(ward_id, ward, `Growth Related`, `State of Good Repair`, `Service Improvement and Enhancement`)
+
+average_budget |>
+  head() |>
+  kable(col.names = c("Ward ID", "Ward Name", "Growth Related", 
+                      "State of Good Repair", "Service Improvement and Enhancement"))
+```
+## Relationship between Average Household Income & Population with Budget Allocation for Growth Related Projects
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-growth-related-budget
+#| fig.cap: "Growth Related Budget by Ward"
+#| fig-pos: "h"
+#| fig.width: 10
+#| fig.height: 5
+
+combined_data <- analysis_ward_data |>
+  left_join(average_budget, by = "ward_id") |>
+  rename(ward = ward.x) |>
+  select(ward_id, ward, population, average_household_income, `Growth Related`, `State of Good Repair`, `Service Improvement and Enhancement`)
+
+growth_budget <- combined_data |>
+  select(ward_id, ward, population, average_household_income, `Growth Related`)
+
+p1 <- ggplot(growth_budget, aes(x = population, y = `Growth Related`, label= ward_id)) +
+  geom_point() +
+  geom_text_repel(hjust = -0.5, vjust = 0.5) +
+  geom_smooth(method = "lm", color = "blue", se = TRUE) +
+  labs(x = "Population", y = "Average Total 10-Year Budget (in 000s) 2021-24") +
+  theme_minimal()
+
+p2 <- ggplot(growth_budget, aes(x = average_household_income, y = `Growth Related`, label= ward_id)) +
+  geom_point() +
+  geom_text_repel(hjust = -0.5, vjust = 0.5) +
+  geom_smooth(method = "lm", color = "blue", se = TRUE) +
+  labs(x = "Average Household Income", y = "") +
+  theme_minimal()
+
+# Combine both plots side by side
+grid.arrange(p1, p2, ncol = 2)
+
+```
+
+
+## Relationship between Average Household Income & Population with Budget Allocation for State of Good Repair Projects
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-state-of-good-repair-budget
+#| fig.cap: "State of Good Repair Budget by Ward"
+#| fig-pos: "h"
+#| fig.width: 10
+#| fig.height: 5
+
+good_repair_budget <- combined_data |>
+  select(ward_id, ward, population, average_household_income, `State of Good Repair`)
+
+p1 <- ggplot(good_repair_budget, aes(x = population, y = `State of Good Repair`, label= ward_id)) +
+  geom_point() +
+  geom_text_repel(hjust = -0.5, vjust = 0.5) +
+  geom_smooth(method = "lm", color = "blue", se = TRUE) +
+  labs(x = "Population", y = "Average Total 10-Year Budget (in 000s) 2021-24") +
+  theme_minimal()
+
+p2 <- ggplot(good_repair_budget, aes(x = average_household_income, y = `State of Good Repair`, label= ward_id)) +
+  geom_point() +
+  geom_text_repel(hjust = -0.5, vjust = 0.5) +
+  geom_smooth(method = "lm", color = "blue", se = TRUE) +
+  labs(x = "Average Household Income", y = "") +
+  theme_minimal()
+
+# Combine both plots side by side
+grid.arrange(p1, p2, ncol = 2)
+```
+
+### Relationship between Average Household Income & Population with Budget Allocation for Service Improvement and Enhancement Projects
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| label: fig-service-improvement-budget
+#| fig.cap: "Service Improvement and Enhancement Budget by Ward"
+#| fig-pos: "h"
+#| fig.width: 10
+#| fig.height: 5
+
+s_i_budget <- combined_data |>
+  select(ward_id, ward, population, average_household_income, `Service Improvement and Enhancement`)
+
+p1 <- ggplot(s_i_budget, aes(x = population, y = `Service Improvement and Enhancement`, label= ward_id)) +
+  geom_point() +
+  geom_text_repel(hjust = -0.5, vjust = 0.5) +
+  geom_smooth(method = "lm", color = "blue", se = TRUE) +
+  labs(x = "Population", y = "Average Total 10-Year Budget (in 000s) 2021-24") +
+  theme_minimal()
+
+p2 <- ggplot(s_i_budget, aes(x = average_household_income, y = `Service Improvement and Enhancement`, label= ward_id)) +
+  geom_point() +
+  geom_text_repel(hjust = -0.5, vjust = 0.5) +
+  geom_smooth(method = "lm", color = "blue", se = TRUE) +
+  labs(x = "Average Household Income", y = "") +
+  theme_minimal()
+
+# Combine both plots side by side
+grid.arrange(p1, p2, ncol = 2)
+```
+
+
+
+
+# Discussion {#sec-discussion}
+
+\newpage
+
+# Appendix {#sec-appendix}
+
+## Data Tables
+
+### Building Permits Status
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| label: tbl-status-building-permits-data
+#| tbl-cap: "Building permit statuses"
+#| tbl-pos: H
+
+# Display the unique statuses in the building permits data using kable
+building_permits |>
+  distinct(STATUS) |>
+  kable() |>
+  kable_styling(full_width = F, position = "center")
+
+```
+
+## Model Details {#sec-model-details}
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+# select only growth related, state of good repair and service improvement and enhancement
+service_improvement <- analysis_budget_data |>
+  filter(category == "Service Improvement and Enhancement") |>
+  mutate(total_10_year = total_10_year / 1000) |>
+  # remove negative values
+  filter(total_10_year > 0) |>
+ rename(total_budget = total_10_year)
+
+# Calculate the outliers using IQR
+outliers <- service_improvement |>
+  group_by(year) |>
+  mutate(
+    Q1 = quantile(total_budget, 0.25),
+    Q3 = quantile(total_budget, 0.75),
+    IQR = Q3 - Q1,
+    is_outlier = total_budget < (Q1 - 1.5 * IQR) | total_budget > (Q3 + 1.5 * IQR)
+  ) |>
+  filter(is_outlier)
+
+# Plot with labels for outliers
+ggplot(service_improvement, aes(x = factor(year), y = total_budget)) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  geom_jitter(aes(color = as.factor(ward_id)), width = 0.2) +
+  geom_text(
+    data = outliers, 
+    aes(label = ward), 
+    nudge_y = 15, 
+    check_overlap = TRUE
+  ) +  # Label only outliers
+  labs(
+    title = "Total Budget Over Years",
+    x = "Year",
+    y = "Total Budget (in thousands)"
+  ) +
+  theme_minimal() +
+  # remove legend
+  theme(legend.position = "none")
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+# select only growth related, state of good repair and service improvement and enhancement
+growth_related <- analysis_budget_data |>
+  filter(category == "Growth Related") |>
+  mutate(total_10_year = total_10_year / 1000) |>
+  # remove negative values
+  filter(total_10_year > 0) |>
+ rename(total_budget = total_10_year)
+
+# Calculate the outliers using IQR
+outliers <- growth_related |>
+  group_by(year) |>
+  mutate(
+    Q1 = quantile(total_budget, 0.25),
+    Q3 = quantile(total_budget, 0.75),
+    IQR = Q3 - Q1,
+    is_outlier = total_budget < (Q1 - 1.5 * IQR) | total_budget > (Q3 + 1.5 * IQR)
+  ) |>
+  filter(is_outlier)
+
+# Plot with labels for outliers
+ggplot(growth_related, aes(x = factor(year), y = total_budget)) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  geom_jitter(aes(color = as.factor(ward_id)), width = 0.2) +
+  geom_text(
+    data = outliers, 
+    aes(label = ward), 
+    nudge_y = 15, 
+    check_overlap = TRUE
+  ) +  # Label only outliers
+  labs(
+    title = "Total Budget Over Years",
+    x = "Year",
+    y = "Total Budget (in thousands)"
+  ) +
+  theme_minimal() +
+  # remove legend
+  theme(legend.position = "none")
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+# select only growth related, state of good repair and service improvement and enhancement
+state_of_good_repair <- analysis_budget_data |>
+  filter(category == "State of Good Repair") |>
+  mutate(total_10_year = total_10_year / 1000) |>
+  # remove negative values
+  filter(total_10_year > 0) |>
+ rename(total_budget = total_10_year)
+
+# Calculate the outliers using IQR
+outliers <- state_of_good_repair |>
+  group_by(year) |>
+  mutate(
+    Q1 = quantile(total_budget, 0.25),
+    Q3 = quantile(total_budget, 0.75),
+    IQR = Q3 - Q1,
+    is_outlier = total_budget < (Q1 - 1.5 * IQR) | total_budget > (Q3 + 1.5 * IQR)
+  ) |>
+  filter(is_outlier)
+
+# Plot with labels for outliers
+ggplot(state_of_good_repair, aes(x = factor(year), y = total_budget)) +
+  geom_boxplot(fill = "skyblue", color = "darkblue") +
+  geom_jitter(aes(color = as.factor(ward_id)), width = 0.2) +
+  geom_text(
+    data = outliers, 
+    aes(label = ward), 
+    nudge_y = 15, 
+    check_overlap = TRUE
+  ) +  # Label only outliers
+  labs(
+    title = "Total Budget Over Years",
+    x = "Year",
+    y = "Total Budget (in thousands)"
+  ) +
+  theme_minimal() +
+  # remove legend
+  theme(legend.position = "none")
+```
+
+# References
