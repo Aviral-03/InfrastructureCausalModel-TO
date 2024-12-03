@@ -4,34 +4,6 @@ format: html
 editor: visual
 ---
 
-## Park and Recreation Facility Projects {#sec-parks}
-
-The Park and Recreation Facility Projects dataset [@toronto_parks], published by the Parks, Forestry and Recreation Division and last updated on July 22, 2024, contains information about park and recreation facility projects in Toronto. This dataset includes details about the project name, location, ward number, and project status. Park and recreation facilities are essential public amenities that contribute to the quality of life and well-being of residents, providing spaces for recreation, leisure, and community engagement.
-
-We choose this dataset to evaluate the how budget allocations are related to the number of park and recreation facility projects in each ward. The number of park projects can serve as a proxy for community development and public service enhancement, reflecting the need for investments in public amenities and infrastructure. By analyzing the relationship between park projects and budget allocations, we can gain insights into how public service enhancements influence the distribution of resources across the city. This will also help us understand how the city's budget decisions align with community development trends and public service needs in different wards, and determine if there are any disparities in resource allocation based on public service enhancements to certain wards.
-
-```{r}
-parks_data <- here::here("data/01-raw_data/Park and Recreation Facility Projects - 4326.csv")
-parks <- read_csv(parks_data)
-
-# create a graph of the number of parks by ward_number
-parks |>
-  count(ward_number) |>
-  ggplot(aes(x = ward_number, y = n)) +
-  geom_col() +
-  labs(x = "Ward number", y = "Number of parks") +
-  theme_minimal()
-```
-
-```{r}
-#| include: false
-#| warning: false
-#| message: false
-
-library(tidyverse)
-library(palmerpenguins)
-```
-
 # Introduction
 
 Overview paragraph
@@ -57,47 +29,6 @@ Overview text
 Some paragraphs about how we go from a phenomena in the world to an entry in the dataset.
 
 ## Outcome variables
-
-Add graphs, tables and text. Use sub-sub-headings for each outcome variable or update the subheading to be singular.
-
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
-
-```{r}
-#| label: fig-bills
-#| fig-cap: Bills of penguins
-#| echo: false
-
-ggplot(penguins, aes(x = island, fill = species)) +
-  geom_bar(alpha = 0.8) +
-  scale_fill_manual(values = c("darkorange","purple","cyan4"),
-                    guide = "none") +
-  theme_minimal() +
-  facet_wrap(~species, ncol = 1) +
-  coord_flip()
-```
-
-Talk more about it.
-
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
-
-```{r}
-#| label: fig-planes
-#| fig-cap: Relationship between wing length and width
-#| echo: false
-#| warning: false
-#| message: false
-
-analysis_data <- read_csv(here::here("data/02-analysis_data/analysis_data.csv"))
-
-analysis_data |> 
-  ggplot(aes(x = width, y = length)) +
-  geom_point(alpha = 0.8) +
-  theme_minimal() +
-  labs(x = "Wing width (mm)",
-       y = "Wing length (mm)")
-```
-
-Talk way more about it.
 
 ## Predictor variables
 
@@ -255,97 +186,55 @@ library(tidyverse)
 library(collapse)
 library(tinytable)
 library(marginaleffects)
+library(rstanarm)
+library(bayesplot)
 ```
 
 ```{r}
+analysis_budget_data <- read.csv(here::here("data/02-analysis_data/analysis_budget_data.csv"))
+analysis_building_permits <- read.csv(here::here("data/02-analysis_data/analysis_building_permits.csv"))
+analysis_ward_data <- read.csv(here::here("data/02-analysis_data/analysis_ward_data.csv"))
+
 # combine all the years data for each ward and for each category
 model_data <- analysis_budget_data |>
   group_by(ward_id, category, ward) |>
-  summarize(total_10_year = sum(total_10_year)) |>
-  pivot_wider(names_from = category, values_from = total_10_year)
+  summarise(avg_total_10_year = mean(total_10_year)) |>
+  pivot_wider(names_from = category, values_from = avg_total_10_year) |>
+  # sum the total 10 year budget for each ward
+  group_by(ward_id, ward) |>
+  summarise(total_budget = sum(`Growth Related`, `State of Good Repair`, `Service Improvement and Enhancement`))
 
 # combine the model data with the ward profile data
 model_data <- model_data |>
   left_join(analysis_ward_data, by = "ward_id") |>
-  select(ward_id, ward.x, population, average_household_income, `Growth Related`, `State of Good Repair`, `Service Improvement and Enhancement`) |>
+  select(ward_id, ward.x, total_budget, average_household_income, population) |>
   rename(ward = ward.x) |>
+  # left join with the building permits data
   left_join(analysis_building_permits, by = "ward_id") |>
-  rename(growth_related = `Growth Related`, state_of_good_repair = `State of Good Repair`, service_improvement = `Service Improvement and Enhancement`)
-
+  select(ward_id, ward, total_budget, average_household_income, population, total_building_permits)
 ```
 
 ```{r}
-# Install and load rstanarm if not installed
-# install.packages("rstanarm")
-# Load required libraries
-library(rstanarm)
-library(bayesplot)
 
-# Prepare the data (assuming you've read the CSV)
-data <- read.csv(here::here("data/02-analysis_data/model_data.csv"))
+# convert the ward_id to a factor
+model_data$ward_id <- as.factor(model_data$ward_id)
 
-write.csv(data, here::here("data/02-analysis_data/model_data.csv"))
-
-# Basic Poisson Model
-permits_model <- stan_glm(
-  building_permits ~ ward_id,
+model <- stan_glm(
+  formula = total_building_permits ~ total_budget + average_household_income + population + ward_id,
   data = model_data,
-  family = poisson(link = "log"),s
-  prior = normal(0, 2.5),  # Weakly informative prior
-  prior_intercept = normal(0, 10),
-  chains = 4,
-  iter = 2000,
-  seed = 123
+  family = gaussian(link = "identity"),
+  prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
+  prior_intercept = normal(location = 0, scale = 2.5, autoscale = TRUE)
 )
 
-# Model summary
-summary(permits_model)
-
-# Diagnostic plots
-plot(permits_model)
-
-# Posterior predictive checks
-pp_check(permits_model)
-
-# Credible intervals
-posterior_interval(permits_model)
-
-# Visualize posterior distributions
-mcmc_areas(permits_model)
-
-# Predictive performance
-# Compare observed vs. predicted
-predicted_permits <- posterior_predict(permits_model)
-
-```
-
-```{r}
-library(rstanarm)
-library(bayesplot)
-
-# Fit the Negative Binomial model
-# building_permits is the target variable
-# population, average_household_income, growth_related, state_of_good_repair, and service_improvement are predictors
-model <- stan_glmer(
-  growth_related ~ population + average_household_income + (1 | ward_id),
-  data = data,
-  family = neg_binomial_2(link = "log"),
-  chains = 4,
-  iter = 2000,
-  seed = 1234
-)
-
-# Summarize the model
+# Summarize model output
 summary(model)
 
 # Posterior predictive checks
 pp_check(model)
 
-# Diagnostic plots
+# Plot the coefficient estimates
 plot(model)
-
-# Posterior predictive checks
-pp_check(model)
 
 # Credible intervals
 posterior_interval(model)
@@ -356,9 +245,18 @@ mcmc_areas(model)
 # Predictive performance
 # Compare observed vs. predicted
 predicted_permits <- posterior_predict(model)
+
+# plot diagnostics
+plot(model, "trace")
+plot(model, "rhat")
+
+modelsummary(
+  list(
+    "Model" = model
+  ),
+)
 ```
 
 ```{r}
-# model summary
 
 ```

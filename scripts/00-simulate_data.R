@@ -1,52 +1,56 @@
 #### Preamble ####
-# Purpose: Simulates a dataset of Australian electoral divisions, including the 
-  #state and party that won each division.
-# Author: Rohan Alexander
-# Date: 26 September 2024
-# Contact: rohan.alexander@utoronto.ca
+# Purpose: Simulate data for the project
+# Author: Aviral Bhardwaj
+# Date: 2024-12-01
+# Contact: aviral.bhardwaj@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: The `tidyverse` package must be installed
-# Any other information needed? Make sure you are in the `starter_folder` rproj
-
+# Pre-requisites: N.A
+# Any other information needed? N.A
 
 #### Workspace setup ####
 library(tidyverse)
-set.seed(853)
+set.seed(9407)
 
 
 #### Simulate data ####
-# State names
-states <- c(
-  "New South Wales",
-  "Victoria",
-  "Queensland",
-  "South Australia",
-  "Western Australia",
-  "Tasmania",
-  "Northern Territory",
-  "Australian Capital Territory"
-)
+ward_id <- tibble(ward = 1:25)
+ward_names <- c("Etobicoke North", "Etobicoke Centre", "Etobicoke-Lakeshore",
+                "Parkdale-High Park","York South-Weston", "York Centre",
+                "Humber River-Black Creek", "Eglinton-Lawrence",
+                "Davenport", "Spadina-Fort York", "University-Rosedale",
+                "Toronto-St. Paul's", "Toronto Centre", "Toronto-Danforth",
+                "Don Valley West", "Don Valley East", "Don Valley North",
+                "Willowdale", "Beaches-East York", "Scarborough Southwest",
+                "Scarborough Centre", "Scarborough-Agincourt",
+                "Scarborough North", "Scarborough-Guildwood",
+                "Scarborough-Rouge Park")
 
-# Political parties
-parties <- c("Labor", "Liberal", "Greens", "National", "Other")
+ward_id <- ward_id |>
+  mutate(ward_name = ward_names) |>
+  rename(ward_id = ward) |>
+  rename(ward = ward_name)
 
-# Create a dataset by randomly assigning states and parties to divisions
-analysis_data <- tibble(
-  division = paste("Division", 1:151),  # Add "Division" to make it a character
-  state = sample(
-    states,
-    size = 151,
-    replace = TRUE,
-    prob = c(0.25, 0.25, 0.15, 0.1, 0.1, 0.1, 0.025, 0.025) # Rough state population distribution
-  ),
-  party = sample(
-    parties,
-    size = 151,
-    replace = TRUE,
-    prob = c(0.40, 0.40, 0.05, 0.1, 0.05) # Rough party distribution
-  )
-)
+category <- c("A", "B", "C", "D")
 
+# Simulate analysis budget data
+analysis_budget <- tibble(ward_id = sample(1:25, 100, replace = TRUE),
+                          category = sample(category, 100, replace = TRUE),
+                          budget = runif(100, 10000, 100000),
+                          year = sample(2021:2024, 100, replace = TRUE)) |>
+  left_join(ward_id, by = "ward_id")
+
+# Simulate ward data
+ward_data <- tibble(ward_id = 1:25,
+                    population = sample(10000:100000, 25),
+                    average_household_income = sample(50000:100000, 25)) |>
+  left_join(ward_id, by = "ward_id")
+
+# Simulate building permit data
+building_permits <- tibble(ward_id = 1:25,
+                           number_of_permits = sample(100:1000, 25)) |>
+  left_join(ward_id, by = "ward_id")
 
 #### Save data ####
-write_csv(analysis_data, "data/00-simulated_data/simulated_data.csv")
+write.csv(ward_data, here::here("data/00-simulated_data/ward_data.csv"), row.names = FALSE)
+write.csv(analysis_budget, here::here("data/00-simulated_data/analysis_budget.csv"), row.names = FALSE)
+write.csv(building_permits, here::here("data/00-simulated_data/building_permits.csv"), row.names = FALSE)

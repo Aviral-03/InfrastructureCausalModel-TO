@@ -183,7 +183,7 @@ building_permits <- building_permits |>
 Application Accepted" | STATUS == "Issuance Pending" | STATUS == "Ready for Issuance" | STATUS == "Permit Issued" | STATUS == "Permit Issued/Close File") |>
   filter(!is.na(POSTAL)) |>
   filter(!is.na(STATUS)) |>
-  filter(grepl("new building", WORK, ignore.case = TRUE)) |>
+  # filter(grepl("new building", WORK, ignore.case = TRUE)) |>
   left_join(postal_code_to_ward, by = c("POSTAL" = "postal_code")) |>
   filter(!is.na(primary_ward)) |>
   rename("ward_id" = "primary_ward")
