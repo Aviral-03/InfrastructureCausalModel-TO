@@ -219,8 +219,8 @@ model_data <- model_data |>
 # convert the ward_id to a factor
 model_data$ward_id <- as.factor(model_data$ward_id)
 
-model <- stan_glm(
-  formula = total_building_permits ~ total_budget + average_household_income + population + ward_id,
+model <- stan_glmer(
+  formula = total_building_permits ~ total_budget + average_household_income + (1 | ward_id),
   data = model_data,
   family = gaussian(link = "identity"),
   prior = normal(location = 0, scale = 2.5, autoscale = TRUE),
@@ -245,6 +245,13 @@ mcmc_areas(model)
 # Predictive performance
 # Compare observed vs. predicted
 predicted_permits <- posterior_predict(model)
+
+# posterior predictive vs observed
+posterior_vs_prior(model) +
+  theme_minimal() +
+  scale_color_brewer() +
+  theme(legend.position = "bottom") +
+  coord_flip()
 
 # plot diagnostics
 plot(model, "trace")
