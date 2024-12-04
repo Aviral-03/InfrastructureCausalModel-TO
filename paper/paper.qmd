@@ -3,10 +3,10 @@ title: "Demographic Influences on Municipal Budget Allocation and Infrastructure
 subtitle: "Population Density Drive Larger Budget Allocations meanwhile Average Household Income Drives Construction Projects"
 author: 
   - Aviral Bhardwaj
-thanks: "Code and data are available at: https://github.com/Aviral-03/Toronto-WardWide-Budget-Analysis"
+thanks: "Code and data are available at: [https://github.com/Aviral-03/InfrastructureCausalModel-TO](https://github.com/Aviral-03/InfrastructureCausalModel-TO)." 
 date: today
 date-format: long
-abstract: "This study investigates how population density and average household income affect budget allocations across Toronto’s 25 wards, and how these factors, along with budget allocation, influence construction projects. Using data from the city's \"Capital Budget Plan\", \"Ward Profiles\" and \"Active Building Permits\", we analyze spending patterns in key areas like related to infrastructre. Our analysis, guided by a causal model, reveals a negative association between population density and construction activity, with some high-density wards receiving significantly higher budget allocations. Average household income and total budget allocations were positively correlated with the number of building permits. These insights highlight potential disparities in resource distribution, emphasizing the need for more equitable urban budget planning to address diverse community needs."
+abstract: "This study investigates how population density and average household income affect budget allocations across Toronto’s 25 wards, and how these factors, along with budget allocation, influence construction projects. Using data from the city's \"Capital Budget Plan\", \"Ward Profiles\" and \"Active Building Permits\", we analyze spending patterns in key areas like related to infrastructre. Our analysis, guided by a causal model, presents a negative association between population density and construction activity, with some high-density wards receiving significantly higher budget allocations. Average household income and total budget allocations were positively correlated with the number of building permits. These findings highlight potential disparities in resource distribution, emphasizing the need for more equitable urban budget planning to address diverse community needs."
 format: pdf
 number-sections: true
 toc: true
@@ -68,13 +68,13 @@ Major projects like the Ontario Line—a new subway connecting Toronto’s east 
 
 This study uses data from the City of Toronto’s Open Data Portal, including demographic information from the "2021 Ward Profiles", "Capital Budget & Plan By Ward (10 yr Approved) 2021-2024", and "Building Applications and Permits". Our analysis, guided by a causal model, shows that both population density and average household income significantly influence budget allocations and the issuance of building permits, key indicators of infrastructure development. However, population density was identified as an exclusion restriction, as its inclusion in the Bayesian multiregression model revealed a counterintuitive negative relationship with the number of building permits. This suggests that unobserved factors may be influencing the link between population density and construction activity. After excluding population density from the model, we found that average household income and total budget allocations were positively correlated with building permits. This result aligns with expectations: wealthier wards with higher incomes receive larger budget allocations, leading to more construction projects.
 
-The paper is organized as follows: [@sec-data] outlines the data sources and methodology used in the analysis. [@sec-model] explains the Bayesian model applied to estimate the effects of demographic and economic factors, along with budget allocations, on construction projects. [@sec-results] presents key findings, including trends in budget allocations, the relationship between demographic factors and budget distribution, and the impact on construction projects. [@sec-discussion] explores the implications for urban governance and budget planning in Toronto. Finally, [@sec-limitations] addresses the study’s limitations and [@sec-future-work] offers recommendations for future research. Additional details, including tables, figures, and methodology, are provided in the [@sec-appendix].
+The paper is organized as follows: [@sec-data] outlines the data sources and methodology used in the analysis. [@sec-model] explains the Bayesian model applied to estimate the effects of demographic and economic factors, along with budget allocations, on construction projects. [@sec-results] presents key findings, including trends in budget allocations, the relationship between demographic factors and budget distribution, and the impact on construction projects. [@sec-discussion] explores the implications for urban governance and budget planning in Toronto. Finally, [@sec-limitations] addresses the study’s limitations and offers recommendations for future research. Additional details, including tables, figures, and methodology, are provided in the [@sec-appendix].
 
 ## Estimand
 
 Our research question and estimand analyse the causal relationships between population, income, budget allocation, and active construction projects ([@fig-causal-model]). Population and income serve as confounders, influencing both budget allocation and construction projects. Budget allocation acts as a mediator, connecting the confounders to the outcome, and as an instrumental variable, helping to estimate the effect of these predictors on the number of construction projects. The outcome variable is active construction projects, while population and income are the predictor variables. We aim to estimate the causal effect (estimand) of budget allocation on construction projects, while accounting for the influence of population and income. This paper highlights how budget decisions mediate the broader impact of socioeconomic factors on infrastructure development.
 
-Population is a critical demographic indicator, representing the number of residents in each ward, while average household income reflects economic well-being, influencing access to resources and quality of life [@Schaeffer]. Therefore, these two variables of interest were chosen for the analysis. For budget allocations we choose these specific categories of interest, specifically Growth-Related expenditures, State of Good Repair, and Service Improvement and Enhancement.
+Population is a important demographic indicator, representing the number of residents in each ward, while average household income reflects economic well-being, influencing access to resources and quality of life [@Schaeffer]. Therefore, these two variables of interest were chosen for the analysis. For budget allocations we choose these specific categories of interest, specifically Growth-Related expenditures, State of Good Repair, and Service Improvement and Enhancement.
 
 ```{r}
 #| warning: false
@@ -127,7 +127,7 @@ The 2021 Ward Profiles [@toronto_ward_profiles], based on the 25-Ward model were
 
 These questionnaires gathered information on various topics related to residents' demographic characteristics, such as education, household income, number of dependents, employment status and etc. Participation in the survey is voluntary, and data is collected directly from residents, including their postal codes, which are used to determine their respective wards. To ensure privacy and confidentiality, the data is subsequently aggregated and anonymized [@canada_statcan_2023_nhs].
 
-This data-set was included in this analysis to provide insights into the population and average household income for each ward, providing insights into the city's socioeconomic landscape. 25-Ward model was used instead of the 44-Ward model as it was the most recent data available at the time of analysis and matched the Capital Budget data.
+This data-set was included in this analysis to provide understanding into the population and average household income for each ward, providing understanding into the city's socioeconomic landscape. 25-Ward model was used instead of the 44-Ward model as it was the most recent data available at the time of analysis and matched the Capital Budget data.
 
 The data was stored in an Excel workbook with multiple tabs, but for this analysis, we used the first tab, `2021 Census One variable`, which contains data for all 25 wards (Ward 1, Ward 2, ..., Ward 25). After cleaning, the data was saved in CSV and Parquet formats, with the following columns:
 
@@ -161,7 +161,7 @@ For the purpose of this analysis we selected the year 2021-2024 to align with th
 
 Each budget plan includes five primary categories under *State of Good Repair*, *Growth Related*, *Health and Safety*, *Service Improvement and Enhancement*, and *Legislated*. These categories define the main areas where capital expenditures are directed. For this analysis, however, we will focus on these three variables of interest: *State of Good Repair*, *Growth Related*, and *Service Improvement and Enhancement*.
 
-These categories were selected because they represent critical areas of investment that directly impact the quality of life and well-being of Toronto residents. *State of Good Repair* focuses on maintaining and preserving existing infrastructure, *Growth Related* addresses the expansion and development of new infrastructure, and *Service Improvement and Enhancement* aims to enhance public services and amenities. By analyzing budget allocations in these categories, we can gain valuable insights into the city's spending priorities and identify opportunities for more effective and equitable resource distribution. While also identifying potential disparities in funding across various wards of the city.
+These categories were selected because they represent significant areas of investment that directly impact the quality of life and well-being of Toronto residents. *State of Good Repair* focuses on maintaining and preserving existing infrastructure, *Growth Related* addresses the expansion and development of new infrastructure, and *Service Improvement and Enhancement* aims to enhance public services and amenities. By analyzing budget allocations in these categories, we can gain understand city's spending priorities and identify opportunities for more effective and equitable resource distribution. While also identifying potential disparities in funding across various wards of the city.
 
 Raw data includes key columns such as `Project Name`, yearly budget allocations for each year, `Ward Number`, `Ward`, `Category`, and `Total 10 Year` (Sum of Year 1 to 10), where the budget is in thousands of dollars (e.g., 10 = \$10,000). [@tbl-capital-budget-data] shows a sample of the cleaned data along with our variables of interest:
 
@@ -261,7 +261,7 @@ plot1 / plot2
 
 ## Building Permits - Active Permits {#sec-building-permits}
 
-The *Building Permits - Active Permits* dataset [@toronto_building_permits], published by the City Planning Division and last updated on November 28, 2024, serves as a comprehensive record of active building permits in Toronto. A building permit is a municipally issued document, mandated by the Building Code Act and enforced by the City of Toronto, regulating the construction or demolition of physical structures [@toronto_building_permits].
+The *Building Permits - Active Permits* dataset [@toronto_building_permits], published by the City Planning Division and last updated on November 28, 2024, serves as an important record of active building permits in Toronto. A building permit is a municipally issued document, mandated by the Building Code Act and enforced by the City of Toronto, regulating the construction or demolition of physical structures [@toronto_building_permits].
 
 The process of obtaining a building permit involves submitting an application to the City of Toronto, including necessary drawings, documents, and other forms based on the permit type. The Building Division reviews the application, and a Toronto Building Inspector ensures compliance with the Ontario Building Code, Zoning By-law, and other applicable regulations. Once approved, the permit is issued, allowing the applicant to commence construction or demolition.
 
@@ -285,7 +285,7 @@ building_permits |>
   kable(col.names = c("ID", "Permit Type", "Structure Type", "Work", "Postal Code", "Status"))
 ```
 
-We selected this data-set to evaluate how budget allocations correlate with the number of building permits issued in each ward. The number of permits serves as a proxy for construction activity and development, highlighting the demand for infrastructure investment and capital expenditures. By examining the relationship between building permits and budget allocations, we can gain valuable insights into how construction activity influences resource distribution across the city's wards.
+We selected this data-set to evaluate how budget allocations correlate with the number of building permits issued in each ward. The number of permits serves as a proxy for construction activity and development, highlighting the demand for infrastructure investment and capital expenditures. By examining the relationship between building permits and budget allocations, we can understand how construction activity influences resource distribution across the city's wards.
 
 From the raw data, we selected key variables of interest: `Postal Code`, `Status`, and `Work`. The `Postal Code` was used to map building permits to their respective wards, while `Status` and `Work` were utilized to filter permits based on their current state and type of work. [@tbl-status-building-permits-data] lists 45 unique statuses assigned to each submitted permit. For this analysis, we focused on permits with the following statuses: `Approved`, `Application Accepted`, `Issuance Pending`, `Ready for Issuance`, `Permit Issued`, and `Permit Issued/Close File`. These statuses indicate that the permit has been approved and that construction or demolition is either underway or completed.
 
@@ -295,7 +295,7 @@ The cleaned data was then saved in CSV and Parquet formats with the following co
 -   **`ward_id`**: Unique identifier for each ward.\
 -   **`total_building_permits`**: Total number of building permits issued in each ward.
 
-[@fig-building-permits-data] illustrates the total number of building permits by ward, providing valuable insights into construction activity and development patterns across Toronto’s wards.
+[@fig-building-permits-data] illustrates the total number of building permits by ward, providing understanding into construction activity and development patterns across Toronto’s wards.
 
 ```{r}
 #| echo: false
@@ -493,7 +493,8 @@ average_budget |>
   kable(col.names = c("Ward ID", "Ward Name", "Growth Related", 
                       "State of Good Repair", "Service Improvement and Enhancement"))
 ```
-### Relationship between Average Household Income & Population with Budget Allocation for Service Improvement and Enhancement Projects 
+
+### Relationship between Predictors and Budget Allocations (Service Improvement and Enhancement)
 ```{r}
 #| echo: false
 #| message: false
@@ -540,22 +541,24 @@ Other wards like Ward 3 (Etobicoke-Lakeshore) and Ward 10 (Spadina-Fort York), w
 
 Despite these outliers, the majority of wards received similar budget allocations for Service Improvement and Enhancement projects, underscoring a city-wide strategy to enhance services uniformly for all residents.
 
-### Relationship between Average Household Income & Population with Budget Allocation for Growth Related Projects and State of Good Repair Projects
 
-[@fig-growth-related-budget] (a) illustrates the relationship between average household income, population, and the total 10-year budget allocation for Growth-Related projects. The linear regression line for average household income remains relatively flat, hovering around \$100,000. This suggests that budget allocations for Growth-Related projects are not significantly influenced by income levels, indicating a more uniform distribution of funds across wards regardless of household income. A similar lack of correlation is observed in [@fig-growth-related-budget] (b), where budget allocations for State of Good Repair projects also show minimal dependence on average household income.
 
-In contrast, the linear regression line for population shows a strong positive correlation with budget allocation for Growth-Related projects. Wards with higher population densities—such as Ward 10 (Spadina-Fort York), Ward 13 (Toronto Centre), Ward 5 (York South-Weston), and Ward 2 (Etobicoke North)—receive a larger share of the Growth-Related budget. This indicates that population density plays a critical role in determining funding levels for these projects, with more populous wards benefiting from increased allocations. A similar trend is observed in the budget distribution for State of Good Repair projects, where wards with higher population densities receive a proportionally larger share of the funds.
+### Relationship between Predictors and Budget Allocations (Growth-Related and State of Good Repair)
+
+[@fig-growth-related-budget]a) illustrates the relationship between average household income, population, and the total 10-year budget allocation for Growth-Related projects. The linear regression line for average household income remains relatively flat, hovering around \$100,000. This suggests that budget allocations for Growth-Related projects are not significantly influenced by income levels, indicating a more uniform distribution of funds across wards regardless of household income. A similar lack of correlation is observed in [@fig-growth-related-budget]b), where budget allocations for State of Good Repair projects also show minimal dependence on average household income.
+
+In contrast, the linear regression line for population shows a strong positive correlation with budget allocation for Growth-Related projects. Wards with higher population densities—such as Ward 10 (Spadina-Fort York), Ward 13 (Toronto Centre), Ward 5 (York South-Weston), and Ward 2 (Etobicoke North)—receive a larger share of the Growth-Related budget. This indicates that population density plays an important role in determining funding levels for these projects, with more populous wards benefiting from increased allocations. A similar trend is observed in the budget distribution for State of Good Repair projects, where wards with higher population densities receive a proportionally larger share of the funds.
+
 ```{r}
 #| echo: false
 #| message: false
 #| warning: false
 #| label: fig-growth-related-budget
-#| fig.cap: "Growth Related Budget and State of Good Repair Budget by Ward"
-#| fig-subcap: ["Growth Related Budget", "State of Good Repair Budget"]
+#| fig.cap: "Growth and State of Good Repair Budget by Ward"
+#| fig-subcap: ["Growth Related", "State of Good Repair"]
 #| fig-pos: "h"
 #| fig.width: 10
-#| fig.height: 5
-#| layout-ncol: 1
+#| fig.height: 3
 
 growth_budget <- combined_data |>
   select(ward_id, ward, population, average_household_income, `Growth Related`)
@@ -573,21 +576,19 @@ p2 <- ggplot(growth_budget, aes(x = average_household_income, y = `Growth Relate
   geom_smooth(method = "lm", color = "blue", se = TRUE) +
   labs(x = "Average Household Income", y = "") +
   theme_minimal()
-
-# Combine both plots side by side
-grid.arrange(p1, p2, ncol = 2)
-
 good_repair_budget <- combined_data |>
   select(ward_id, ward, population, average_household_income, `State of Good Repair`)
 
-p1 <- ggplot(good_repair_budget, aes(x = population, y = `State of Good Repair`, label= ward_id)) +
+
+
+p3 <- ggplot(good_repair_budget, aes(x = population, y = `State of Good Repair`, label= ward_id)) +
   geom_point() +
   geom_text_repel(hjust = -0.5, vjust = 0.5) +
   geom_smooth(method = "lm", color = "blue", se = TRUE) +
   labs(x = "Population", y = "Average Total 10-Year Budget (in 000s) 2021-24") +
   theme_minimal()
 
-p2 <- ggplot(good_repair_budget, aes(x = average_household_income, y = `State of Good Repair`, label= ward_id)) +
+p4 <- ggplot(good_repair_budget, aes(x = average_household_income, y = `State of Good Repair`, label= ward_id)) +
   geom_point() +
   geom_text_repel(hjust = -0.5, vjust = 0.5) +
   geom_smooth(method = "lm", color = "blue", se = TRUE) +
@@ -596,11 +597,18 @@ p2 <- ggplot(good_repair_budget, aes(x = average_household_income, y = `State of
 
 # Combine both plots side by side
 grid.arrange(p1, p2, ncol = 2)
+grid.arrange(p3, p4, ncol = 2)
 
-
+# | echo: false
+# | message: false
+# | warning: false
+# | label: fig-good-repair-budget
+# | fig.cap: "State of Good Repair Budget by Ward"
+# | fig-pos: "h"
+# | fig.width: 10
+# | fig.height: 5
 ```
 
-\newpage
 
 # Model {#sec-model}
 
@@ -633,13 +641,11 @@ The model was fitted using the `stan_glmer` function from the `rstanarm` package
 
 ## Model justification
 
-To better understand the underlying data, [@eda-model-justification] provides a summary of the mean, median, and standard deviation for each variable used in the model. The predictor variables have large values and different scales, which can cause numerical instability and convergence issues in the model. To address this, we will standardize the predictor variables by subtracting the mean and dividing by the standard deviation. This will scale the variables consistently and improve both the model's convergence and interpretability. Additionally, we did not use a Bayesian Poisson regression model or negative binomial because the number of building permits is a continuous variable, not count data. Therefore, we chose to use a Bayesian multiple linear regression model. This model allows us to estimate the effect of population density, average household income, and budget allocations on the number of building permits issued in each ward giving us a well-rounded understanding of the relationships between these variables.
-
 ```{r}
 #| echo: false
 #| message: false
 #| warning: false
-#| label: eda-model-justification
+#| label: tbl-model-justification
 #| tbl-cap: "Mean, Median, and Standard Deviation of Each Variable"
 #| tbl-pos: "h"
 
@@ -689,6 +695,9 @@ model_justification |>
 
 ```
 
+To better understand the underlying data, [@tbl-model-justification] provides a summary of the mean, median, and standard deviation for each variable used in the model. The predictor variables have large values and different scales, which can cause numerical instability and convergence issues in the model. To address this, we will standardize the predictor variables by subtracting the mean and dividing by the standard deviation. This will scale the variables consistently and improve both the model's convergence and interpretability. Additionally, we did not use a Bayesian Poisson regression model or negative binomial because the number of building permits is a continuous variable, not count data. Therefore, we chose to use a Bayesian multiple linear regression model. This model allows us to estimate the effect of population density, average household income, and budget allocations on the number of building permits issued in each ward giving us a well-rounded understanding of the relationships between these variables.
+
+
 The factors chosen for the model are known to influence the number of building permits issued in each ward. Population density and average household income are demographic and economic indicators that can affect construction activity. Budget allocations for Growth-Related, State of Good Repair, and Service Improvement and Enhancement projects are key drivers of infrastructure development and resource distribution. Including these variables allows for assessing their individual and combined effects on the number of building permits issued.
 
 When population density was included, for the causual model, it exhibited exclusion restriction qualities, as it showed an unexpected negative relationship with building permits, leading to its exclusion for better interpretability. The model was then refitted without population density, focusing on average household income and budget allocations as predictors.
@@ -701,7 +710,7 @@ In this section, we visualize the relationships between population density, aver
 
 The City of Toronto is divided into 25 wards, and the 2021 census data highlights significant disparities in population and average household income among them. As shown in [@fig-toronto-map-population], Spadina-Fort York (Ward 10) and Etobicoke-Lakeshore (Ward 3) have the highest population densities, with 135,400 and 139,920 residents, respectively. In contrast, Don Valley West (Ward 15) has a lower population density of 101,025 but boasts the highest average household income at \$224,800.
 
-Population distribution reveals a concentration in the western part of the city and downtown areas. Notably, wards like Etobicoke Centre (Ward 2) and Etobicoke-Lakeshore (Ward 3), situated farther from downtown, have lower costs of living and correspondingly lower average household incomes, such as Etobicoke North (Ward 2) with \$95,200.
+Population distribution presents a concentration in the western part of the city and downtown areas. Notably, wards like Etobicoke Centre (Ward 2) and Etobicoke-Lakeshore (Ward 3), situated farther from downtown, have lower costs of living and correspondingly lower average household incomes, such as Etobicoke North (Ward 2) with \$95,200.
 
 An interesting pattern emerges around Don Valley West (Ward 15), which has the highest average household income. Wards such as University-Rosedale (Ward 11), Toronto-St. Paul's (Ward 12), and Eglinton-Lawrence (Ward 8) are clustered together, indicating a geographical correlation among high-income areas. Conversely, the wards with the highest population densities do not overlap with those that have the highest average household incomes, highlighting distinct socioeconomic patterns within the city.
 
@@ -769,11 +778,11 @@ modelsummary(
 )
 ```
 
-The results of the Bayesian regression model, summarized in [@tbl-model-results], provide important insights into the relationship between total budget allocations, average household income, and the number of building permits issued across wards. 
+The results of the Bayesian regression model, summarized in [@tbl-model-results], provide important understanding into the relationship between total budget allocations, average household income, and the number of building permits issued across wards. 
 
-The model explains 59.1% of the variance in building permits (R² = 0.591), indicating a moderate level of explanatory power. The coefficients suggest that both total budget (0.530) and average household income (0.350) have a positive and significant impact on the number of building permits issued, implying that areas with higher budget allocations and income levels are more likely to see increased construction activity. 
+The model explains 59.1% of the variance in building permits, indicating a moderate level of explanatory power. The coefficients suggest that both total budget (0.530) and average household income (0.350) have a positive and significant impact on the number of building permits issued, implying that areas with higher budget allocations and income levels are more likely to see increased construction activity. 
 
-The inclusion of ward-specific random effects (σ² = 0.141) highlights the importance of accounting for variation between wards, suggesting that there are unobserved factors specific to each ward influencing permit issuance. Although the adjusted R² (0.369) indicates that the model's explanatory power is somewhat limited after accounting for the complexity of the predictors, the model still provides valuable insights into the role of economic factors in shaping construction activity. With an RMSE of 0.58, the model's predictions are reasonably accurate, although there is still room for improvement.
+The inclusion of ward-specific random effects highlights the importance of accounting for variation between wards, suggesting that there are unobserved factors specific to each ward influencing permit issuance. Although the adjusted $R^2$ (0.369) indicates that the model's explanatory power is somewhat limited after accounting for the complexity of the predictors, the model still provides understanding into the role of economic factors in shaping construction activity. With an RMSE of 0.58, the model's predictions are reasonably accurate, although there is still room for improvement.
 
 In constructing the model, we assumed linearity and additive effects, acknowledging that these simplifications may not fully capture the interactions among variables. The model's limitations, such as the exclusion of population density due to its unexpected negative relationship, reflect a trade-off between interpretability and capturing complex dynamics. Nevertheless, the findings align with expectations that wealthier areas and those with greater budget allocations are more likely to experience construction growth, reaffirming the importance of economic resources in urban development patterns. 
 
@@ -785,15 +794,15 @@ In this section, we discuss the implications of our findings on urban developmen
 
 Construction plays a pivotal role in the economy, driving both job creation and economic growth [@citeConstruction]. One of the key indicators of construction activity is the number of building permits issued within a ward. Increased construction correlates with job opportunities, infrastructure development, and overall community well-being. For example, investment in residential and non-residential construction rose from 24.9% in 2021 to 29.5% in 2023, with projections indicating a further 1.5% increase in construction employment by 2024 [@citeConstructionEmployment].
 
-As highlighted in [@sec-model-results] Bayesian regression model reveals that average household income has a significant positive effect on the issuance of building permits. This suggests that construction activity tends to concentrate in higher-income areas, where demand for development is stronger. This finding underscores the role of income levels in driving construction and infrastructure development, emphasizing the need for targeted investments in lower-income areas to stimulate economic growth and enhance community well-being.
+As highlighted in [@sec-model-results] Bayesian regression model shows that average household income has a significant positive effect on the issuance of building permits. This suggests that construction activity tends to concentrate in higher-income areas, where demand for development is stronger. This finding underscores the role of income levels in driving construction and infrastructure development, emphasizing the need for targeted investments in lower-income areas to stimulate economic growth and enhance community well-being.
 
-For potential property investors in Toronto, these insights offer a strategic advantage. Investing in areas with higher average household incomes may be more profitable due to the increased likelihood of ongoing construction activity, which can drive property value appreciation and strengthen the local economy. While high-population-density areas are typically attractive for investment, our findings suggest that this may not always be the case.
+For potential property investors in Toronto, these understanding offer a strategic advantage. Investing in areas with higher average household incomes may be more profitable due to the increased likelihood of ongoing construction activity, which can drive property value appreciation and strengthen the local economy. While high-population-density areas are typically attractive for investment, our findings suggest that this may not always be the case.
 
 ## Investing in Higher-Income Areas vs. High-Density Areas
 
 The interplay between population density, average household income, and infrastructure investment in Toronto highlights a complex challenge in achieving equitable resource distribution. As seen in [@sec-rel-variables] high-income areas often attract more construction activity, driven by market forces and residents’ ability to finance new developments. Whereas, only specific high-density areas like Ward 10 (Spadina-Fort York) and Ward 13 (Toronto Centre) receive substantial investment despite high population density, suggesting efforts to address this imbalance. Meanwhile, as discussed in [@sec-distribution], low-density and lower-income wards risk being underserved.
 
-These findings underscore the importance of equity-based budgeting, where low-density and lower-income areas should receive targeted investments to meet critical infrastructure needs. This approach aligns with urban development strategies that prioritize inclusivity. Notable examples include transit expansions such as the Ontario Line and Crosstown extensions [@citeTransitExpansion].The Ontario Line is expected to connect high-density areas like Ward 10 (Spadina-Fort York) and Ward 13 (Toronto Centre) to the broader transit network, which could stimulate further development and infrastructure investment in these wards, fostering a more balanced urban landscape and distributing population growth more evenly across the city.
+These findings underscore the importance of equity-based budgeting, where low-density and lower-income areas should receive targeted investments to meet infrastructure needs. This approach aligns with urban development strategies that prioritize inclusivity. Notable examples include transit expansions such as the Ontario Line and Crosstown extensions [@citeTransitExpansion].The Ontario Line is expected to connect high-density areas like Ward 10 (Spadina-Fort York) and Ward 13 (Toronto Centre) to the broader transit network, which could stimulate further development and infrastructure investment in these wards, fostering a more balanced urban landscape and distributing population growth more evenly across the city.
 
 For future policy, Toronto could enhance equity by expanding initiatives such as eliminating parking minimums. This policy reduces construction costs, making development in high-density areas more feasible. Such measures would promote a more balanced and sustainable urban environment, ensuring that population growth is accompanied by appropriate infrastructure investments.
 
@@ -807,23 +816,56 @@ This discrepancy reflects broader challenges highlighted in Toronto's recent 10-
 Moreover, the Ford government’s fall economic statement indicates a shrinking provincial deficit, suggesting a cautious fiscal environment that may limit how budgetary increases translate into tangible construction outputs [@citeFallEconomicStatement]. These dynamics suggest that other factors, such as regulatory frameworks, market conditions, or demographic shifts, may be playing a more significant role than budgetary allocations alone in shaping Toronto’s construction landscape.
 
 
-# Weaknesses and Limitations {#sec-limitations}
+# Weaknesses and Future Work {#sec-limitations}
 
-There are several limitations to the analysis that need to be addressed. As discussed in [@sec-data], the datasets used in this study are publicly available from the City of Toronto. While they provide valuable insights into the city's demographics, budget allocations, and building permits, they may not fully capture the complexity of Toronto’s infrastructure development and resource distribution. For example, the building permits dataset includes only active permits, which may not reflect the entire scope of construction activity. Additionally, the budget allocations dataset may exclude certain infrastructure projects and expenditures, leading to potential gaps in the analysis.
+There are several limitations to the analysis that need to be addressed. As discussed in [@sec-data], the datasets used in this study are publicly available from the City of Toronto. While they represents city's demographics, budget allocations, and building permits, they may not fully capture the complexity of Toronto’s infrastructure development and resource distribution. For example, the building permits dataset includes only active permits, which may not reflect the entire scope of construction activity. Additionally, the budget allocations dataset may exclude certain infrastructure projects and expenditures, leading to potential gaps in the analysis.
 
-Furthermore, as detailed in [@sec-appendix], there are 45 unique statuses assigned to each submitted permit. This analysis focused on only one subset of these statuses, which may not fully capture the complexity of the building permit process and the various stages of construction. Future research could include additional permit statuses for a more comprehensive understanding of construction activity. Another limitation is the lack of detailed data on specific projects within each budget category. This information could offer further insights into why certain wards receive more or less funding. 
+Furthermore, as detailed in [@sec-appendix], there are 45 unique statuses assigned to each submitted permit. This analysis focused on only one subset of these statuses, which may not fully capture the complexity of the building permit process and the various stages of construction. Future research could include additional permit statuses for a better understanding of construction activity. Another limitation is the lack of detailed data on specific projects within each budget category. This information could offer further understanding into why certain wards receive more or less funding. 
 
 Lastly, the model assumes that the relationships between population density, average household income, and budget allocations are linear, which may oversimplify these relationships. Additionally, the analysis assumes independence among wards, which may not be accurate due to shared resources and infrastructure projects. Future research could explore more advanced modeling techniques to address these non-linear relationships and dependencies.
 
-# Future Work {#sec-future-work}
+## Future Work
 
-This analysis provides a foundation for future research on infrastructure development, resource distribution, and economic well-being in Toronto. Future studies could explore additional factors that influence budget allocations and building permit issuance, such as infrastructure needs, community priorities, and political considerations. By incorporating these variables into the analysis, researchers can gain a more comprehensive understanding of how municipal budgets are allocated and how construction activity is distributed across the city's wards.
+This analysis provides a foundation for future research on infrastructure development, resource distribution, and economic well-being in Toronto. Future studies could explore additional factors that influence budget allocations and building permit issuance, such as infrastructure needs, community priorities, and political considerations. By incorporating these variables into the analysis, researchers can gain a more in-depth understanding of how municipal budgets are allocated and how construction activity is distributed across the city's wards.
 
 In terms of policy recommendations, the city should adopt equity-based budgeting to ensure underfunded, high-density wards receive adequate resources, particularly for essential services like health and safety. Toronto could also implement a baseline funding model for high-need areas and enhance public engagement in the budget process, ensuring that residents of under served wards have a voice in resource allocation. These actions would promote more transparent, balanced, and equitable urban governance.
 
 \newpage
 
+\appendix
+
 # Appendix {#sec-appendix}
+
+## Survey, Sample, and Data Collection
+
+The relationship between income levels, population and construction outcomes is complex and influenced by diverse socioeconomic and regional factors. Current observational data, such as NHS survey to get income levels, and population of ward profiles but is inherently limited by its sample [@nhs_canada]. To better answer our research question, a more targeted survey approach is essential. This exploration outlines an idealized survey methodology designed to reduce bias, ensure representativeness, and deepen understanding.
+
+### Idealized Survey Design for Construction Analysis 
+A survey specifically designed to explore the link between income and construction outcomes would involve the following key components:
+
+a. Defining the Survey Objectives
+The survey would aim to investigate how income disparities influence construction investment, access to resources, regulatory hurdles, and housing quality across different regions.
+
+b. Sampling Methodology  
+To ensure a representative and unbiased dataset, the survey would employ:  
+
+- Stratified Sampling: Income levels and ward classifications (e.g., urban, suburban, rural) would be stratified to ensure proportional representation.  
+- Random Sampling Within Strata: Participants would be randomly selected within each stratum to enhance the validity and generalizability of the findings.  
+
+c. Sample Size and Distribution
+The sample size should be sufficiently large to allow for statistically significant comparisons across different income levels and geographic regions. A minimum target of several thousand participants distributed evenly across strata would be ideal.
+
+### Reducing Bias in Sampling and Data Collection  
+Bias reduction is important in survey design to ensure reliable and actionable understanding. This involves addressing various types of bias:
+
+a. Sampling Bias Mitigation
+Stratified random sampling ensures that underrepresented groups, particularly those in lower income brackets or remote regions, are adequately included.  
+
+b. Non-Response Bias Mitigation 
+Offering multiple survey delivery methods—such as online platforms, in-person interviews, and mailed surveys—enhances accessibility and participation. Additionally, providing incentives like small monetary rewards or gift cards can boost response rates among diverse groups.  
+
+c. Design Bias Mitigation 
+To avoid influencing responses, survey questions must be neutrally worded and pilot-tested to ensure clarity. Cognitive interviews with a subset of participants can help refine the wording and structure of questions.
 
 ## Building Permits Status
 
